@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 
 const openai = new OpenAI({
-  apiKey: "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", // This is also the default, can be omitted
+  apiKey: "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", // use env variable
 });
 
 app.get("/projects", async (req, res) => {
