@@ -18,14 +18,23 @@ const openai = new OpenAI({
 
 app.get("/projects", async (req, res) => {
   const { searchQuery } = req.query;
+  let projects = [];
+  try {
+    projects = await Project.find().select({ _id: 0, __v: 0 });
+  } catch (error) {
+    res.status(500).send({ message: "Unable to fetch project details" });
+    return;
+  }
 
-  const projects = await Project.find().select({ _id: 0, __v: 0 });
-
-  if (searchQuery) {
-    const result = await processWithChatGPT(searchQuery, projects);
-    res.send({ data: result });
-  } else {
-    res.send({ data: projects });
+  try {
+    if (searchQuery) {
+      const result = await processWithChatGPT(searchQuery, projects);
+      res.send({ data: result });
+    } else {
+      res.send({ data: projects });
+    }
+  } catch (error) {
+    res.send(500).send({ message: "Unexpected error from GPT" });
   }
 });
 
@@ -47,7 +56,7 @@ async function processWithChatGPT(prompt, projects) {
       {
         role: "system",
         content:
-          "Output in JSON format: '[<project_title1>, <project_title2>, ...]'",
+          "Output in JSON format: '[<project_title1>, <project_title2>, ...]'. If no matching project is found send an empty array in JSON",
       },
     ],
   });
