@@ -1,7 +1,7 @@
 export const projectList = [
   {
     title: "Project 1",
-    technologies: "Project.Technologies",
+    technologies: "React JS, JWT Authentication, Local Storage",
     skills: {
       frontend: "HTML, CSS, JavaScript",
       backend: "Python",

@@ -2,61 +2,63 @@ import express from "express";
 import OpenAI from "openai";
 import cors from "cors";
 import dotenv from "dotenv";
-import { projectList } from "./utils/dummyData.js";
+import { dbConnect } from "./db/db.js";
+import Project from "./models/project.js";
 
 dotenv.config();
 const app = express();
 
 app.use(cors());
 
+dbConnect();
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_KEY, // This is also the default, can be omitted
+  apiKey: process.env.OPENAI_KEY,
 });
 
 app.get("/projects", async (req, res) => {
   const { searchQuery } = req.query;
+
+  const projects = await Project.find().select({ _id: 0, __v: 0 });
+
   if (searchQuery) {
-    const result = await processWithChatGPT(searchQuery);
-    res.send(result);
+    const result = await processWithChatGPT(searchQuery, projects);
+    res.send({ data: result });
   } else {
-    res.send({ data: projectList });
+    res.send({ data: projects });
   }
 });
 
-async function processWithChatGPT(prompt) {
+async function processWithChatGPT(prompt, projects) {
   const x = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo-0613",
+    model: "gpt-3.5-turbo-16k-0613",
     messages: [
       { role: "system", content: "Consider the following array of projects" },
-      { role: "system", content: JSON.stringify(projectList.slice(0, 80)) },
+      {
+        role: "system",
+        content: JSON.stringify(
+          projects?.length > 80 ? projects.slice(0, 80) : projects
+        ),
+      },
       {
         role: "user",
         content: prompt,
       },
       {
         role: "system",
-        content: "Output format: '[<project_title1>, <project_title2>, ...]'",
+        content:
+          "Output in JSON format: '[<project_title1>, <project_title2>, ...]'",
       },
     ],
   });
 
-  const matchingProjects = x.choices[0].message.content;
+  const matchingProjectTitles = JSON.parse(x.choices[0].message.content);
 
-  const filteredProjects = projectList.filter((project) => {
-    return matchingProjects.includes(project.title);
+  const filteredProjects = projects.filter((project) => {
+    return matchingProjectTitles.some((title) => project.title === title);
   });
 
-  console.log(filteredProjects);
-
-  return { data: filteredProjects };
-  // const prompt = projectDescriptions.join('\n'); // Join descriptions into a single text
-  // const completion = await openai.completions.create({
-  //   model: "gpt-3.5-turbo-0613",
-  //   prompt: prompt,
-  //   max_tokens: 30,
-  // });
-  // console.log(completion);
-  // return completion.choices[0].text;
+  return filteredProjects;
 }
 const PORT = process.env.PORT || 6000;
 
