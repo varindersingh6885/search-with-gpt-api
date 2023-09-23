@@ -34,7 +34,7 @@ app.get("/projects", async (req, res) => {
       res.send({ data: projects });
     }
   } catch (error) {
-    res.send(500).send({ message: "Unexpected error from GPT" });
+    res.status(500).send({ message: "Unexpected error from GPT" });
   }
 });
 
