@@ -1,6 +1,7 @@
 import express from "express";
 import OpenAI from "openai";
 import cors from "cors";
+import dotenv from "dotenv";
 import { projectList } from "./utils/dummyData.js";
 
 dotenv.config();
@@ -60,5 +61,5 @@ async function processWithChatGPT(prompt) {
 const PORT = process.env.PORT || 6000;
 
 app.listen(PORT, () => {
-  console.log(`Server started at ${port}`);
+  console.log(`Server started at ${PORT}`);
 });
